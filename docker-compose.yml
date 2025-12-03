@@ -112,7 +112,7 @@ services:
       - mariadb-master2
 
   proxysql:
-    image: proxysql/proxysql:2.5
+    image: proxysql/proxysql:latest
     container_name: proxysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
