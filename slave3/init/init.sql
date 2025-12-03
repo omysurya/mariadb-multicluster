@@ -6,5 +6,5 @@ FLUSH PRIVILEGES;
 SELECT SLEEP(15);
 
 -- Setup replication from master2
-CHANGE MASTER TO MASTER_HOST='mariadb-master2', MASTER_USER='repl', MASTER_PASSWORD='replpassword', MASTER_PORT=3306, MASTER_USE_GTID=slave_pos;
+CHANGE MASTER TO MASTER_HOST='mariadb-master2', MASTER_USER='repl', MASTER_PASSWORD='replpassword', MASTER_PORT=3306;
 START SLAVE;

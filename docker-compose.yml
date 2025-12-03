@@ -14,7 +14,7 @@ services:
       - "3307:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=1 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON
+    command: --bind-address=0.0.0.0 --server-id=1 --log-bin=mysql-bin --binlog-format=ROW
 
   mariadb-master2:
     image: mariadb:11.2
@@ -31,7 +31,7 @@ services:
       - "3308:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=2 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON
+    command: --bind-address=0.0.0.0 --server-id=2 --log-bin=mysql-bin --binlog-format=ROW
     depends_on:
       - mariadb-master1
 
@@ -50,7 +50,7 @@ services:
       - "3309:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=3 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    command: --bind-address=0.0.0.0 --server-id=3 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
     depends_on:
       - mariadb-master1
 
@@ -69,7 +69,7 @@ services:
       - "3310:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=4 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    command: --bind-address=0.0.0.0 --server-id=4 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
     depends_on:
       - mariadb-master1
 
@@ -88,7 +88,7 @@ services:
       - "3311:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=5 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    command: --bind-address=0.0.0.0 --server-id=5 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
     depends_on:
       - mariadb-master2
 
@@ -107,24 +107,20 @@ services:
       - "3312:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=6 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    command: --bind-address=0.0.0.0 --server-id=6 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
     depends_on:
       - mariadb-master2
 
   proxysql:
     image: proxysql/proxysql:latest
     container_name: proxysql
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
-      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
     volumes:
       - ./proxysql/proxysql.cnf.template:/etc/proxysql.cnf.template
     ports:
       - "6033:6033"
     networks:
       - mariadb-cluster
-    command: sh -c "sed 's/$${MYSQL_ROOT_PASSWORD}/'$${MYSQL_ROOT_PASSWORD}'/g; s/$${MYSQL_REPL_PASSWORD}/'$${MYSQL_REPL_PASSWORD}'/g; s/$${MONITOR_PASSWORD}/'$${MONITOR_PASSWORD}'/g' /etc/proxysql.cnf.template > /etc/proxysql.cnf && proxysql -f -c /etc/proxysql.cnf"
+    command: sh -c "cp /etc/proxysql.cnf.template /etc/proxysql.cnf && exec /usr/bin/proxysql -f -c /etc/proxysql.cnf"
     depends_on:
       - mariadb-master1
       - mariadb-master2
