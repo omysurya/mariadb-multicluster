@@ -1,1 +1,18 @@
+# Ignore MariaDB container data directories (runtime)
+master1/data/
+master2/data/
+slave1/data/
+slave2/data/
+slave3/data/
+slave4/data/
+
+# ProxySQL runtime data
+proxysql/*.log
+proxysql/*.pid
+
+# Ignore environment file with secrets
+.env
+
+# Docker Compose overrides
+docker-compose.override.yml
 .env
