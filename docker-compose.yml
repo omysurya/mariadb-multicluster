@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  mariadb-master1:
+    image: mariadb:10.11
+    container_name: mariadb-master1
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./master1/data:/var/lib/mysql
+      - ./master1/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3307:3306"
+    networks:
+      - mariadb-cluster
+    command: --bind-address=0.0.0.0 --server-id=1 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON
+
+  mariadb-master2:
+    image: mariadb:10.11
+    container_name: mariadb-master2
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./master2/data:/var/lib/mysql
+      - ./master2/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3308:3306"
+    networks:
+      - mariadb-cluster
+    command: --bind-address=0.0.0.0 --server-id=2 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON
+    depends_on:
+      - mariadb-master1
+
+  mariadb-slave1:
+    image: mariadb:10.11
+    container_name: mariadb-slave1
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./slave1/data:/var/lib/mysql
+      - ./slave1/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3309:3306"
+    networks:
+      - mariadb-cluster
+    command: --bind-address=0.0.0.0 --server-id=3 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    depends_on:
+      - mariadb-master1
+
+  mariadb-slave2:
+    image: mariadb:10.11
+    container_name: mariadb-slave2
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./slave2/data:/var/lib/mysql
+      - ./slave2/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3310:3306"
+    networks:
+      - mariadb-cluster
+    command: --bind-address=0.0.0.0 --server-id=4 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    depends_on:
+      - mariadb-master1
+
+  mariadb-slave3:
+    image: mariadb:10.11
+    container_name: mariadb-slave3
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./slave3/data:/var/lib/mysql
+      - ./slave3/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3311:3306"
+    networks:
+      - mariadb-cluster
+    command: --bind-address=0.0.0.0 --server-id=5 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    depends_on:
+      - mariadb-master2
+
+  mariadb-slave4:
+    image: mariadb:10.11
+    container_name: mariadb-slave4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+    volumes:
+      - ./slave4/data:/var/lib/mysql
+      - ./slave4/init:/docker-entrypoint-initdb.d
+    ports:
+      - "3312:3306"
+    networks:
+      - mariadb-cluster
+    command: --bind-address=0.0.0.0 --server-id=6 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON --read-only=ON
+    depends_on:
+      - mariadb-master2
+
+  proxysql:
+    image: proxysql/proxysql:2.5
+    container_name: proxysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
+    volumes:
+      - ./proxysql/proxysql.cnf.template:/etc/proxysql.cnf.template
+    ports:
+      - "6033:6033"
+    networks:
+      - mariadb-cluster
+    command: sh -c "sed 's/$${MYSQL_ROOT_PASSWORD}/'$${MYSQL_ROOT_PASSWORD}'/g; s/$${MYSQL_REPL_PASSWORD}/'$${MYSQL_REPL_PASSWORD}'/g; s/$${MONITOR_PASSWORD}/'$${MONITOR_PASSWORD}'/g' /etc/proxysql.cnf.template > /etc/proxysql.cnf && proxysql -f -c /etc/proxysql.cnf"
+    depends_on:
+      - mariadb-master1
+      - mariadb-master2
+      - mariadb-slave1
+      - mariadb-slave2
+      - mariadb-slave3
+      - mariadb-slave4
+
+networks:
+  mariadb-cluster:
+    driver: bridge
