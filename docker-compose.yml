@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   mariadb-master1:
-    image: mariadb:10.11
+    image: mariadb:11.2
     container_name: mariadb-master1
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -19,7 +17,7 @@ services:
     command: --bind-address=0.0.0.0 --server-id=1 --log-bin=mysql-bin --binlog-format=ROW --gtid-mode=ON --enforce-gtid-consistency=ON
 
   mariadb-master2:
-    image: mariadb:10.11
+    image: mariadb:11.2
     container_name: mariadb-master2
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -38,7 +36,7 @@ services:
       - mariadb-master1
 
   mariadb-slave1:
-    image: mariadb:10.11
+    image: mariadb:11.2
     container_name: mariadb-slave1
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -57,7 +55,7 @@ services:
       - mariadb-master1
 
   mariadb-slave2:
-    image: mariadb:10.11
+    image: mariadb:11.2
     container_name: mariadb-slave2
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -76,7 +74,7 @@ services:
       - mariadb-master1
 
   mariadb-slave3:
-    image: mariadb:10.11
+    image: mariadb:11.2
     container_name: mariadb-slave3
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -95,7 +93,7 @@ services:
       - mariadb-master2
 
   mariadb-slave4:
-    image: mariadb:10.11
+    image: mariadb:11.2
     container_name: mariadb-slave4
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
