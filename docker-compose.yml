@@ -14,7 +14,16 @@ services:
       - "3307:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=1 --log-bin=mysql-bin --binlog-format=ROW
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=1
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --max_connections=250
+      --innodb_buffer_pool_size=2G
+      --innodb_log_file_size=512M
+      --innodb_flush_log_at_trx_commit=1
+      --innodb_flush_method=O_DIRECT
 
   mariadb-master2:
     image: mariadb:11.2
@@ -31,7 +40,16 @@ services:
       - "3308:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=2 --log-bin=mysql-bin --binlog-format=ROW
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=2
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --max_connections=250
+      --innodb_buffer_pool_size=2G
+      --innodb_log_file_size=512M
+      --innodb_flush_log_at_trx_commit=1
+      --innodb_flush_method=O_DIRECT
     depends_on:
       - mariadb-master1
 
@@ -50,7 +68,17 @@ services:
       - "3309:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=3 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=3
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --read-only=ON
+      --max_connections=250
+      --innodb_buffer_pool_size=2G
+      --innodb_log_file_size=512M
+      --innodb_flush_log_at_trx_commit=1
+      --innodb_flush_method=O_DIRECT
     depends_on:
       - mariadb-master1
 
@@ -69,7 +97,17 @@ services:
       - "3310:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=4 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=4
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --read-only=ON
+      --max_connections=250
+      --innodb_buffer_pool_size=2G
+      --innodb_log_file_size=512M
+      --innodb_flush_log_at_trx_commit=1
+      --innodb_flush_method=O_DIRECT
     depends_on:
       - mariadb-master1
 
@@ -88,7 +126,17 @@ services:
       - "3311:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=5 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=5
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --read-only=ON
+      --max_connections=250
+      --innodb_buffer_pool_size=2G
+      --innodb_log_file_size=512M
+      --innodb_flush_log_at_trx_commit=1
+      --innodb_flush_method=O_DIRECT
     depends_on:
       - mariadb-master2
 
@@ -107,7 +155,17 @@ services:
       - "3312:3306"
     networks:
       - mariadb-cluster
-    command: --bind-address=0.0.0.0 --server-id=6 --log-bin=mysql-bin --binlog-format=ROW --read-only=ON
+    command: >
+      --bind-address=0.0.0.0
+      --server-id=6
+      --log-bin=mysql-bin
+      --binlog-format=ROW
+      --read-only=ON
+      --max_connections=250
+      --innodb_buffer_pool_size=2G
+      --innodb_log_file_size=512M
+      --innodb_flush_log_at_trx_commit=1
+      --innodb_flush_method=O_DIRECT
     depends_on:
       - mariadb-master2
 
