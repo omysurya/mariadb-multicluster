@@ -391,7 +391,7 @@ services:
       - "6032:6032"
     networks:
       - mariadb-cluster
-    command: sh -c "sed 's/{{MYSQL_ROOT_PASSWORD}}/'\"$$MYSQL_ROOT_PASSWORD\"'/g; s/{{MYSQL_REPL_PASSWORD}}/'\"$$MYSQL_REPL_PASSWORD\"'/g; s/{{MONITOR_PASSWORD}}/'\"$$MONITOR_PASSWORD\"'/g' /etc/proxysql.cnf.template > /etc/proxysql.cnf && exec /usr/bin/proxysql -f -c /etc/proxysql.cnf --idle-threads"
+    command: sh -c "sed \"s/{{MYSQL_ROOT_PASSWORD}}/$${MYSQL_ROOT_PASSWORD}/g; s/{{MYSQL_REPL_PASSWORD}}/$${MYSQL_REPL_PASSWORD}/g; s/{{MONITOR_PASSWORD}}/$${MONITOR_PASSWORD}/g\" /etc/proxysql.cnf.template > /etc/proxysql.cnf && exec /usr/bin/proxysql -f -c /etc/proxysql.cnf --idle-threads"
     depends_on:
       - mariadb-master1
       - mariadb-master2
