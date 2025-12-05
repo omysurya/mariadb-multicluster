@@ -32,11 +32,12 @@ SYSBENCH_SCRIPT="/usr/share/sysbench/oltp_read_write.lua"
 ########################################
 # Warna Output
 ########################################
-RED="\e[31m"
-GREEN="\e[32m"
-YELLOW="\e[33m"
-BLUE="\e[34m"
-NC="\e[0m"
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
 ########################################
 # Direktori Log
