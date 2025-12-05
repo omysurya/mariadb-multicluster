@@ -1,6 +1,6 @@
 services:
   mariadb-master1:
-    image: mariadb:11.2
+    image: mariadb:11.4
     container_name: mariadb-master1
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -19,14 +19,46 @@ services:
       --server-id=1
       --log-bin=mysql-bin
       --binlog-format=ROW
-      --max_connections=250
-      --innodb_buffer_pool_size=2G
-      --innodb_log_file_size=512M
-      --innodb_flush_log_at_trx_commit=1
+      --max_connections=500
+      --innodb_buffer_pool_size=3G
+      --innodb_log_file_size=1G
+      --innodb_log_buffer_size=256M
+      --innodb_flush_log_at_trx_commit=0
       --innodb_flush_method=O_DIRECT
+      --innodb_use_native_aio=OFF
+
+      --innodb_io_capacity=4000
+      --innodb_io_capacity_max=8000
+      --innodb_read_io_threads=16
+      --innodb_write_io_threads=16
+      --innodb_doublewrite=OFF
+      --innodb_flush_neighbors=0
+      --innodb_adaptive_hash_index=ON
+
+      --table_open_cache=8000
+      --table_definition_cache=4000
+      --query_cache_type=0
+      --query_cache_size=0
+      --tmp_table_size=512M
+      --max_heap_table_size=512M
+      --thread_cache_size=200
+      --back_log=900
+      --skip-name-resolve
+      --skip-host-cache
+      --connect_timeout=3
+      --sort_buffer_size=8M
+      --read_buffer_size=4M
+      --read_rnd_buffer_size=8M
+      --join_buffer_size=8M
+      --bulk_insert_buffer_size=64M
+      --key_buffer_size=256M
+      --max_allowed_packet=1G
+      --net_buffer_length=16K
+      --binlog_cache_size=4M
+      --sync_binlog=0
 
   mariadb-master2:
-    image: mariadb:11.2
+    image: mariadb:11.4
     container_name: mariadb-master2
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -45,16 +77,48 @@ services:
       --server-id=2
       --log-bin=mysql-bin
       --binlog-format=ROW
-      --max_connections=250
-      --innodb_buffer_pool_size=2G
-      --innodb_log_file_size=512M
-      --innodb_flush_log_at_trx_commit=1
+      --max_connections=500
+      --innodb_buffer_pool_size=3G
+      --innodb_log_file_size=1G
+      --innodb_log_buffer_size=256M
+      --innodb_flush_log_at_trx_commit=0
       --innodb_flush_method=O_DIRECT
+      --innodb_use_native_aio=OFF
+
+      --innodb_io_capacity=4000
+      --innodb_io_capacity_max=8000
+      --innodb_read_io_threads=16
+      --innodb_write_io_threads=16
+      --innodb_doublewrite=OFF
+      --innodb_flush_neighbors=0
+      --innodb_adaptive_hash_index=ON
+
+      --table_open_cache=8000
+      --table_definition_cache=4000
+      --query_cache_type=0
+      --query_cache_size=0
+      --tmp_table_size=512M
+      --max_heap_table_size=512M
+      --thread_cache_size=200
+      --back_log=900
+      --skip-name-resolve
+      --skip-host-cache
+      --connect_timeout=3
+      --sort_buffer_size=8M
+      --read_buffer_size=4M
+      --read_rnd_buffer_size=8M
+      --join_buffer_size=8M
+      --bulk_insert_buffer_size=64M
+      --key_buffer_size=256M
+      --max_allowed_packet=1G
+      --net_buffer_length=16K
+      --binlog_cache_size=4M
+      --sync_binlog=0
     depends_on:
       - mariadb-master1
 
   mariadb-slave1:
-    image: mariadb:11.2
+    image: mariadb:11.4
     container_name: mariadb-slave1
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -74,16 +138,52 @@ services:
       --log-bin=mysql-bin
       --binlog-format=ROW
       --read-only=ON
-      --max_connections=250
-      --innodb_buffer_pool_size=2G
-      --innodb_log_file_size=512M
-      --innodb_flush_log_at_trx_commit=1
+      --relay-log=mysqld-relay-bin
+      --relay-log-index=mysqld-relay-bin.index
+      --max_connections=500
+      --innodb_buffer_pool_size=3G
+      --innodb_log_file_size=1G
+      --innodb_log_buffer_size=256M
+      --innodb_flush_log_at_trx_commit=0
       --innodb_flush_method=O_DIRECT
+      --innodb_use_native_aio=OFF
+
+      --innodb_io_capacity=4000
+      --innodb_io_capacity_max=8000
+      --innodb_read_io_threads=16
+      --innodb_write_io_threads=16
+      --innodb_doublewrite=OFF
+      --innodb_flush_neighbors=0
+      --innodb_adaptive_hash_index=ON
+
+      --table_open_cache=8000
+      --table_definition_cache=4000
+      --query_cache_type=0
+      --query_cache_size=0
+      --tmp_table_size=512M
+      --max_heap_table_size=512M
+      --thread_cache_size=200
+      --back_log=900
+      --skip-name-resolve
+      --skip-host-cache
+      --connect_timeout=3
+      --sort_buffer_size=8M
+      --read_buffer_size=4M
+      --read_rnd_buffer_size=8M
+      --join_buffer_size=8M
+      --bulk_insert_buffer_size=64M
+      --key_buffer_size=256M
+      --max_allowed_packet=1G
+      --net_buffer_length=16K
+      --binlog_cache_size=4M
+      --sync_binlog=0
+      --slave_parallel_threads=8
     depends_on:
       - mariadb-master1
+      - mariadb-master2
 
   mariadb-slave2:
-    image: mariadb:11.2
+    image: mariadb:11.4
     container_name: mariadb-slave2
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -103,16 +203,52 @@ services:
       --log-bin=mysql-bin
       --binlog-format=ROW
       --read-only=ON
-      --max_connections=250
-      --innodb_buffer_pool_size=2G
-      --innodb_log_file_size=512M
-      --innodb_flush_log_at_trx_commit=1
+      --relay-log=mysqld-relay-bin
+      --relay-log-index=mysqld-relay-bin.index
+      --max_connections=500
+      --innodb_buffer_pool_size=3G
+      --innodb_log_file_size=1G
+      --innodb_log_buffer_size=256M
+      --innodb_flush_log_at_trx_commit=0
       --innodb_flush_method=O_DIRECT
+      --innodb_use_native_aio=OFF
+
+      --innodb_io_capacity=4000
+      --innodb_io_capacity_max=8000
+      --innodb_read_io_threads=16
+      --innodb_write_io_threads=16
+      --innodb_doublewrite=OFF
+      --innodb_flush_neighbors=0
+      --innodb_adaptive_hash_index=ON
+
+      --table_open_cache=8000
+      --table_definition_cache=4000
+      --query_cache_type=0
+      --query_cache_size=0
+      --tmp_table_size=512M
+      --max_heap_table_size=512M
+      --thread_cache_size=200
+      --back_log=900
+      --skip-name-resolve
+      --skip-host-cache
+      --connect_timeout=3
+      --sort_buffer_size=8M
+      --read_buffer_size=4M
+      --read_rnd_buffer_size=8M
+      --join_buffer_size=8M
+      --bulk_insert_buffer_size=64M
+      --key_buffer_size=256M
+      --max_allowed_packet=1G
+      --net_buffer_length=16K
+      --binlog_cache_size=4M
+      --sync_binlog=0
+      --slave_parallel_threads=8
     depends_on:
       - mariadb-master1
+      - mariadb-master2
 
   mariadb-slave3:
-    image: mariadb:11.2
+    image: mariadb:11.4
     container_name: mariadb-slave3
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -132,16 +268,52 @@ services:
       --log-bin=mysql-bin
       --binlog-format=ROW
       --read-only=ON
-      --max_connections=250
-      --innodb_buffer_pool_size=2G
-      --innodb_log_file_size=512M
-      --innodb_flush_log_at_trx_commit=1
+      --relay-log=mysqld-relay-bin
+      --relay-log-index=mysqld-relay-bin.index
+      --max_connections=500
+      --innodb_buffer_pool_size=3G
+      --innodb_log_file_size=1G
+      --innodb_log_buffer_size=256M
+      --innodb_flush_log_at_trx_commit=0
       --innodb_flush_method=O_DIRECT
+      --innodb_use_native_aio=OFF
+
+      --innodb_io_capacity=4000
+      --innodb_io_capacity_max=8000
+      --innodb_read_io_threads=16
+      --innodb_write_io_threads=16
+      --innodb_doublewrite=OFF
+      --innodb_flush_neighbors=0
+      --innodb_adaptive_hash_index=ON
+
+      --table_open_cache=8000
+      --table_definition_cache=4000
+      --query_cache_type=0
+      --query_cache_size=0
+      --tmp_table_size=512M
+      --max_heap_table_size=512M
+      --thread_cache_size=200
+      --back_log=900
+      --skip-name-resolve
+      --skip-host-cache
+      --connect_timeout=3
+      --sort_buffer_size=8M
+      --read_buffer_size=4M
+      --read_rnd_buffer_size=8M
+      --join_buffer_size=8M
+      --bulk_insert_buffer_size=64M
+      --key_buffer_size=256M
+      --max_allowed_packet=1G
+      --net_buffer_length=16K
+      --binlog_cache_size=4M
+      --sync_binlog=0
+      --slave_parallel_threads=8
     depends_on:
+      - mariadb-master1
       - mariadb-master2
 
   mariadb-slave4:
-    image: mariadb:11.2
+    image: mariadb:11.4
     container_name: mariadb-slave4
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -161,24 +333,65 @@ services:
       --log-bin=mysql-bin
       --binlog-format=ROW
       --read-only=ON
-      --max_connections=250
-      --innodb_buffer_pool_size=2G
-      --innodb_log_file_size=512M
-      --innodb_flush_log_at_trx_commit=1
+      --relay-log=mysqld-relay-bin
+      --relay-log-index=mysqld-relay-bin.index
+      --max_connections=500
+      --innodb_buffer_pool_size=3G
+      --innodb_log_file_size=1G
+      --innodb_log_buffer_size=256M
+      --innodb_flush_log_at_trx_commit=0
       --innodb_flush_method=O_DIRECT
+      --innodb_use_native_aio=OFF
+
+      --innodb_io_capacity=4000
+      --innodb_io_capacity_max=8000
+      --innodb_read_io_threads=16
+      --innodb_write_io_threads=16
+      --innodb_doublewrite=OFF
+      --innodb_flush_neighbors=0
+      --innodb_adaptive_hash_index=ON
+
+      --table_open_cache=8000
+      --table_definition_cache=4000
+      --query_cache_type=0
+      --query_cache_size=0
+      --tmp_table_size=512M
+      --max_heap_table_size=512M
+      --thread_cache_size=200
+      --back_log=900
+      --skip-name-resolve
+      --skip-host-cache
+      --connect_timeout=3
+      --sort_buffer_size=8M
+      --read_buffer_size=4M
+      --read_rnd_buffer_size=8M
+      --join_buffer_size=8M
+      --bulk_insert_buffer_size=64M
+      --key_buffer_size=256M
+      --max_allowed_packet=1G
+      --net_buffer_length=16K
+      --binlog_cache_size=4M
+      --sync_binlog=0
+      --slave_parallel_threads=8
     depends_on:
+      - mariadb-master1
       - mariadb-master2
 
   proxysql:
     image: proxysql/proxysql:latest
     container_name: proxysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
     volumes:
       - ./proxysql/proxysql.cnf.template:/etc/proxysql.cnf.template
     ports:
       - "6033:6033"
+      - "6032:6032"
     networks:
       - mariadb-cluster
-    command: sh -c "cp /etc/proxysql.cnf.template /etc/proxysql.cnf && exec /usr/bin/proxysql -f -c /etc/proxysql.cnf"
+    command: sh -c "sed 's/{{MYSQL_ROOT_PASSWORD}}/'\"$$MYSQL_ROOT_PASSWORD\"'/g; s/{{MYSQL_REPL_PASSWORD}}/'\"$$MYSQL_REPL_PASSWORD\"'/g; s/{{MONITOR_PASSWORD}}/'\"$$MONITOR_PASSWORD\"'/g' /etc/proxysql.cnf.template > /etc/proxysql.cnf && exec /usr/bin/proxysql -f -c /etc/proxysql.cnf --idle-threads"
     depends_on:
       - mariadb-master1
       - mariadb-master2
@@ -190,3 +403,8 @@ services:
 networks:
   mariadb-cluster:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1
+    internal: false  # Set to true untuk isolasi penuh (tidak bisa akses internet)
