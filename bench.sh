@@ -267,17 +267,17 @@ create_init_sql() {
     mkdir -p "${node_name}/init"
     mkdir -p "${node_name}/data"
 
-    cat > "$init_file" <<'EOF'
+    cat > "$init_file" <<EOF
 -- User untuk replikasi - hanya akses dari network internal (172.25.0.0/16)
-CREATE USER IF NOT EXISTS 'repl'@'172.25.%' IDENTIFIED BY 'replica123';
+CREATE USER IF NOT EXISTS 'repl'@'172.25.%' IDENTIFIED BY '${MYSQL_REPL_PASSWORD}';
 GRANT REPLICATION SLAVE ON *.* TO 'repl'@'172.25.%';
 
 -- User untuk monitoring - hanya akses dari network internal (172.25.0.0/16)
-CREATE USER IF NOT EXISTS 'monitor'@'172.25.%' IDENTIFIED BY 'monitor123';
+CREATE USER IF NOT EXISTS 'monitor'@'172.25.%' IDENTIFIED BY '${MONITOR_PASSWORD}';
 GRANT SELECT, REPLICATION CLIENT, PROCESS ON *.* TO 'monitor'@'172.25.%';
 
 -- Root user sudah dibuat oleh Docker dengan akses dari manapun (%)
--- Password root: password123 (dari MYSQL_ROOT_PASSWORD)
+-- Password root: ${MYSQL_ROOT_PASSWORD} (dari MYSQL_ROOT_PASSWORD)
 
 FLUSH PRIVILEGES;
 
@@ -288,7 +288,7 @@ SELECT SLEEP(15);
 EOF
 
     if [ -n "$master_host" ]; then
-        echo "CHANGE MASTER TO MASTER_HOST='${master_host}', MASTER_USER='repl', MASTER_PASSWORD='replica123', MASTER_PORT=3306;" >> "$init_file"
+        echo "CHANGE MASTER TO MASTER_HOST='${master_host}', MASTER_USER='repl', MASTER_PASSWORD='${MYSQL_REPL_PASSWORD}', MASTER_PORT=3306;" >> "$init_file"
         echo "START SLAVE;" >> "$init_file"
     fi
 

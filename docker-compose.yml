@@ -2,16 +2,18 @@ services:
   mariadb-master1:
     image: mariadb:11.4
     container_name: mariadb-master1
+    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
-      MYSQL_USER: repl
-      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
     volumes:
       - ./master1/data:/var/lib/mysql
-      - ./master1/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3307:3306"
+      - ./scripts/entrypoint-wrapper.sh:/tmp/entrypoint-wrapper.sh:ro
+      - ./scripts/init-users.sql:/tmp/init-template.sql:ro
     networks:
       - mariadb-cluster
     command: >
@@ -19,6 +21,8 @@ services:
       --server-id=1
       --log-bin=mysql-bin
       --binlog-format=ROW
+      --relay-log=mysqld-relay-bin
+      --relay-log-index=mysqld-relay-bin.index
       --max_connections=500
       --innodb_buffer_pool_size=3G
       --innodb_log_file_size=1G
@@ -60,16 +64,20 @@ services:
   mariadb-master2:
     image: mariadb:11.4
     container_name: mariadb-master2
+    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
-      MYSQL_USER: repl
-      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
+      REPLICATION_MASTER: mariadb-master1
     volumes:
       - ./master2/data:/var/lib/mysql
-      - ./master2/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3308:3306"
+      - ./scripts/entrypoint-wrapper.sh:/tmp/entrypoint-wrapper.sh:ro
+      - ./scripts/init-users.sql:/tmp/init-template.sql:ro
+      - ./scripts/setup-replication.sh:/docker-entrypoint-initdb.d/99-setup-replication.sh:ro
     networks:
       - mariadb-cluster
     command: >
@@ -77,6 +85,8 @@ services:
       --server-id=2
       --log-bin=mysql-bin
       --binlog-format=ROW
+      --relay-log=mysqld-relay-bin
+      --relay-log-index=mysqld-relay-bin.index
       --max_connections=500
       --innodb_buffer_pool_size=3G
       --innodb_log_file_size=1G
@@ -120,16 +130,20 @@ services:
   mariadb-slave1:
     image: mariadb:11.4
     container_name: mariadb-slave1
+    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
-      MYSQL_USER: repl
-      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
+      REPLICATION_MASTER: mariadb-master1
     volumes:
       - ./slave1/data:/var/lib/mysql
-      - ./slave1/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3309:3306"
+      - ./scripts/entrypoint-wrapper.sh:/tmp/entrypoint-wrapper.sh:ro
+      - ./scripts/init-users.sql:/tmp/init-template.sql:ro
+      - ./scripts/setup-replication.sh:/docker-entrypoint-initdb.d/99-setup-replication.sh:ro
     networks:
       - mariadb-cluster
     command: >
@@ -185,16 +199,20 @@ services:
   mariadb-slave2:
     image: mariadb:11.4
     container_name: mariadb-slave2
+    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
-      MYSQL_USER: repl
-      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
+      REPLICATION_MASTER: mariadb-master1
     volumes:
       - ./slave2/data:/var/lib/mysql
-      - ./slave2/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3310:3306"
+      - ./scripts/entrypoint-wrapper.sh:/tmp/entrypoint-wrapper.sh:ro
+      - ./scripts/init-users.sql:/tmp/init-template.sql:ro
+      - ./scripts/setup-replication.sh:/docker-entrypoint-initdb.d/99-setup-replication.sh:ro
     networks:
       - mariadb-cluster
     command: >
@@ -250,16 +268,20 @@ services:
   mariadb-slave3:
     image: mariadb:11.4
     container_name: mariadb-slave3
+    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
-      MYSQL_USER: repl
-      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
+      REPLICATION_MASTER: mariadb-master1
     volumes:
       - ./slave3/data:/var/lib/mysql
-      - ./slave3/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3311:3306"
+      - ./scripts/entrypoint-wrapper.sh:/tmp/entrypoint-wrapper.sh:ro
+      - ./scripts/init-users.sql:/tmp/init-template.sql:ro
+      - ./scripts/setup-replication.sh:/docker-entrypoint-initdb.d/99-setup-replication.sh:ro
     networks:
       - mariadb-cluster
     command: >
@@ -315,16 +337,20 @@ services:
   mariadb-slave4:
     image: mariadb:11.4
     container_name: mariadb-slave4
+    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
-      MYSQL_USER: repl
-      MYSQL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
+      MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
+      MONITOR_PASSWORD: ${MONITOR_PASSWORD}
+      REPLICATION_MASTER: mariadb-master1
     volumes:
       - ./slave4/data:/var/lib/mysql
-      - ./slave4/init:/docker-entrypoint-initdb.d
-    ports:
-      - "3312:3306"
+      - ./scripts/entrypoint-wrapper.sh:/tmp/entrypoint-wrapper.sh:ro
+      - ./scripts/init-users.sql:/tmp/init-template.sql:ro
+      - ./scripts/setup-replication.sh:/docker-entrypoint-initdb.d/99-setup-replication.sh:ro
     networks:
       - mariadb-cluster
     command: >
@@ -382,13 +408,15 @@ services:
     container_name: proxysql
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_REPL_USER: ${MYSQL_REPL_USER}
       MYSQL_REPL_PASSWORD: ${MYSQL_REPL_PASSWORD}
+      MONITOR_USER: ${MONITOR_USER}
       MONITOR_PASSWORD: ${MONITOR_PASSWORD}
     volumes:
       - ./proxysql/generate-config.sh:/generate-config.sh
     ports:
       - "6033:6033"
-      - "6032:6032"
+      - "127.0.0.1:6032:6032"
     networks:
       - mariadb-cluster
     command: sh /generate-config.sh
@@ -408,3 +436,5 @@ networks:
         - subnet: 172.25.0.0/16
           gateway: 172.25.0.1
     internal: false  # Set to true untuk isolasi penuh (tidak bisa akses internet)
+
+

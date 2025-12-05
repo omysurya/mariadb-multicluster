@@ -25,7 +25,7 @@ mysql_variables =
 	server_version = "5.5.30";
 	connect_timeout_server = 3000;
 	connect_timeout_server_max = 10000;
-	monitor_username = "monitor";
+	monitor_username = "${MONITOR_USER:-monitor}";
 	monitor_password = "${MONITOR_PASSWORD}";
 	monitor_history = 60000;
 	monitor_connect_interval = 5000;
@@ -69,7 +69,7 @@ mysql_servers = (
 
 mysql_users = (
 	{ username = "root"; password = "${MYSQL_ROOT_PASSWORD}"; default_hostgroup = 10; transaction_persistent = 1; max_connections = 2000; fast_forward = 0; },
-	{ username = "repl"; password = "${MYSQL_REPL_PASSWORD}"; default_hostgroup = 10; max_connections = 500; fast_forward = 1; }
+	{ username = "${MYSQL_REPL_USER:-repl}"; password = "${MYSQL_REPL_PASSWORD}"; default_hostgroup = 10; max_connections = 500; fast_forward = 1; }
 );
 
 mysql_query_rules = (
