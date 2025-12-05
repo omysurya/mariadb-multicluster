@@ -6,6 +6,16 @@ if [ -f "$(dirname "$0")/.env" ]; then
     set +a
 fi
 
+# Detect $DOCKER_COMPOSE command
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif $DOCKER_COMPOSE version &> /dev/null; then
+    DOCKER_COMPOSE="$DOCKER_COMPOSE"
+else
+    echo "Error: Neither 'docker-compose' nor '$DOCKER_COMPOSE' found"
+    exit 1
+fi
+
 # Nama file: bench
 # SysBench Benchmark + System Metrics (compatible with SysBench 1.0.20)
 
@@ -504,7 +514,7 @@ reset_data() {
 
     echo ""
     echo -e "${BLUE}➤ Menghentikan semua containers...${NC}"
-    docker-compose down
+    $DOCKER_COMPOSE down
 
     echo -e "${BLUE}➤ Menghapus data directories...${NC}"
 
@@ -527,7 +537,7 @@ reset_data() {
     echo -e "${GREEN}✓ Semua data berhasil dihapus!${NC}"
     echo ""
     echo -e "${YELLOW}➤ Untuk memulai ulang cluster, jalankan:${NC}"
-    echo "   docker-compose up -d"
+    echo "   $DOCKER_COMPOSE up -d"
     echo ""
     echo -e "${YELLOW}➤ Atau gunakan:${NC}"
     echo "   $0 reset-and-start  # Reset + start otomatis"
@@ -546,7 +556,7 @@ reset_and_start() {
 
     echo ""
     echo -e "${BLUE}➤ Menghentikan semua containers...${NC}"
-    docker-compose down
+    $DOCKER_COMPOSE down
 
     echo -e "${BLUE}➤ Menghapus data directories...${NC}"
 
@@ -569,15 +579,15 @@ reset_and_start() {
     echo -e "${GREEN}✓ Data dihapus!${NC}"
     echo ""
     echo -e "${BLUE}➤ Starting cluster...${NC}"
-    docker-compose up -d
+    $DOCKER_COMPOSE up -d
 
     echo ""
     echo -e "${GREEN}✓ Cluster berhasil di-reset dan di-start!${NC}"
     echo -e "${YELLOW}➤ Tunggu ~60 detik untuk inisialisasi selesai.${NC}"
     echo ""
     echo -e "${YELLOW}➤ Cek status dengan:${NC}"
-    echo "   docker-compose ps"
-    echo "   docker-compose logs -f"
+    echo "   $DOCKER_COMPOSE ps"
+    echo "   $DOCKER_COMPOSE logs -f"
 }
 
 ########################################
