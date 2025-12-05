@@ -6,13 +6,13 @@ if [ -f "$(dirname "$0")/.env" ]; then
     set +a
 fi
 
-# Detect $DOCKER_COMPOSE command
+# Detect docker compose command
 if command -v docker-compose &> /dev/null; then
     DOCKER_COMPOSE="docker-compose"
-elif $DOCKER_COMPOSE version &> /dev/null; then
-    DOCKER_COMPOSE="$DOCKER_COMPOSE"
+elif docker compose version &> /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
 else
-    echo "Error: Neither 'docker-compose' nor '$DOCKER_COMPOSE' found"
+    echo "Error: Neither 'docker-compose' nor 'docker compose' found"
     exit 1
 fi
 
