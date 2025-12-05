@@ -2,7 +2,7 @@ services:
   mariadb-master1:
     image: mariadb:11.4
     container_name: mariadb-master1
-    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
+    entrypoint: ["/bin/bash", "/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
@@ -64,7 +64,7 @@ services:
   mariadb-master2:
     image: mariadb:11.4
     container_name: mariadb-master2
-    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
+    entrypoint: ["/bin/bash", "/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
@@ -130,7 +130,7 @@ services:
   mariadb-slave1:
     image: mariadb:11.4
     container_name: mariadb-slave1
-    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
+    entrypoint: ["/bin/bash", "/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
@@ -199,7 +199,7 @@ services:
   mariadb-slave2:
     image: mariadb:11.4
     container_name: mariadb-slave2
-    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
+    entrypoint: ["/bin/bash", "/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
@@ -268,7 +268,7 @@ services:
   mariadb-slave3:
     image: mariadb:11.4
     container_name: mariadb-slave3
-    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
+    entrypoint: ["/bin/bash", "/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
@@ -337,7 +337,7 @@ services:
   mariadb-slave4:
     image: mariadb:11.4
     container_name: mariadb-slave4
-    entrypoint: ["/tmp/entrypoint-wrapper.sh"]
+    entrypoint: ["/bin/bash", "/tmp/entrypoint-wrapper.sh"]
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
