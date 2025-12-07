@@ -76,12 +76,12 @@ mysql_users = (
 );
 
 mysql_query_rules = (
-	{ rule_id = 1; active = 1; match_digest = "^CREATE.*|^ALTER.*|^DROP.*|^TRUNCATE.*|^RENAME.*"; destination_hostgroup = 10; apply = 1; cache_ttl = 0; comment = "DDL to masters"; },
-	{ rule_id = 2; active = 1; match_digest = "^SET.*|^SHOW.*|^USE.*|^DESC.*|^DESCRIBE.*|^EXPLAIN.*"; destination_hostgroup = 10; apply = 1; cache_ttl = 0; comment = "Session and metadata to masters"; },
-	{ rule_id = 3; active = 1; match_digest = "^BEGIN.*|^START TRANSACTION.*|^COMMIT.*|^ROLLBACK.*"; destination_hostgroup = 10; apply = 1; cache_ttl = 0; comment = "Transactions to masters"; },
-	{ rule_id = 4; active = 1; match_digest = "^SELECT.*FOR UPDATE.*|^SELECT.*LOCK IN SHARE MODE.*"; destination_hostgroup = 10; apply = 1; cache_ttl = 0; comment = "Locking reads to masters"; },
-	{ rule_id = 5; active = 1; match_digest = "^INSERT.*|^UPDATE.*|^DELETE.*|^REPLACE.*|^LOAD DATA.*"; destination_hostgroup = 10; apply = 1; cache_ttl = 0; comment = "DML to masters"; },
-	{ rule_id = 6; active = 1; match_digest = "^SELECT.*"; destination_hostgroup = 20; apply = 1; cache_ttl = 5000; comment = "Reads to slaves"; }
+	{ rule_id = 1; active = 1; match_digest = "^CREATE.*|^ALTER.*|^DROP.*|^TRUNCATE.*|^RENAME.*"; destination_hostgroup = 10; apply = 1; comment = "DDL to masters"; },
+	{ rule_id = 2; active = 1; match_digest = "^SET.*|^SHOW.*|^USE.*|^DESC.*|^DESCRIBE.*|^EXPLAIN.*"; destination_hostgroup = 10; apply = 1; comment = "Session and metadata to masters"; },
+	{ rule_id = 3; active = 1; match_digest = "^BEGIN.*|^START TRANSACTION.*|^COMMIT.*|^ROLLBACK.*"; destination_hostgroup = 10; apply = 1; comment = "Transactions to masters"; },
+	{ rule_id = 4; active = 1; match_digest = "^SELECT.*FOR UPDATE.*|^SELECT.*LOCK IN SHARE MODE.*"; destination_hostgroup = 10; apply = 1; comment = "Locking reads to masters"; },
+	{ rule_id = 5; active = 1; match_digest = "^INSERT.*|^UPDATE.*|^DELETE.*|^REPLACE.*|^LOAD DATA.*"; destination_hostgroup = 10; apply = 1; comment = "DML to masters"; },
+	{ rule_id = 100; active = 1; match_digest = "^SELECT.*"; destination_hostgroup = 20; apply = 1; cache_ttl = 5000; comment = "Reads to slaves"; }
 );
 EOF
 
