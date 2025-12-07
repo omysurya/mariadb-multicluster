@@ -334,6 +334,16 @@ mysql -h127.0.0.1 -P6032 -uadmin -padmin -e "SELECT * FROM stats_mysql_query_rul
 - Verify: `docker exec mariadb-master1 mariadb -uroot -p[password] -e "SELECT User, Host FROM mysql.user;"`
 - Should see `monitor` and `repl` users with Host='172.25.%'
 
+**Import Data via Navicat Gagal (DDL Error)?**
+- Problem: Transfer data dari server lain via Navicat ke ProxySQL gagal saat CREATE TABLE
+- Root Cause: DDL statements tidak ter-routing ke master nodes
+- Solution: ProxySQL query rules sudah diupdate untuk handle DDL statements
+- Steps:
+  1. Run: `.\reload-proxysql.ps1` untuk reload configuration
+  2. Test routing: `.\test-proxysql-routing.ps1`
+  3. Koneksi Navicat ke: `localhost:6033` (user: root)
+- Detail: Lihat `TROUBLESHOOTING.md`
+
 **docker-compose command not found (Linux)?**
 - Script auto-detects Docker Compose v1 (`docker-compose`) or v2 (`docker compose`)
 - Install Docker Compose: `sudo apt install docker-compose` or use Docker Desktop

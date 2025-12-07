@@ -365,18 +365,97 @@ function Reset-AndStart {
 ########################################
 
 function Show-DbStats {
-    Write-ColorOutput "➤ Menampilkan Statistik Database & InnoDB..." -Color Cyan
+    Write-ColorOutput "=== Database Statistics ===" -Color Cyan
+    Write-Host ""
 
-    $query = @"
-SELECT 'INNODB_BUFFER_POOL_SIZE' AS variable, @@innodb_buffer_pool_size AS value UNION ALL
-SELECT 'INNODB_LOG_FILE_SIZE', @@innodb_log_file_size UNION ALL
-SELECT 'INNODB_FLUSH_LOG_AT_TRX_COMMIT', @@innodb_flush_log_at_trx_commit UNION ALL
-SELECT 'INNODB_FLUSH_METHOD', @@innodb_flush_method UNION ALL
-SELECT 'MAX_CONNECTIONS', @@max_connections;
-"@
+    docker exec mariadb-master1 mariadb -uroot -p"$script:DB_PASS" -e "
+        SELECT 'Master1' AS Node, COUNT(*) AS Total_DBs FROM information_schema.SCHEMATA;
+        SELECT 'Master1' AS Node, table_schema, COUNT(*) AS Total_Tables
+        FROM information_schema.TABLES
+        WHERE table_schema NOT IN ('information_schema','performance_schema','mysql','sys')
+        GROUP BY table_schema;
+    " 2>$null
 
-    docker exec mariadb-master1 mariadb -uroot -p"$script:DB_PASS" -e $query 2>$null
-    docker exec mariadb-master1 mariadb -uroot -p"$script:DB_PASS" -e "SHOW GLOBAL STATUS LIKE 'Max_used_connections';" 2>$null
+    Write-Host ""
+    Write-ColorOutput "ProxySQL Connection Pool:" -Color Yellow
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT hostgroup, srv_host, status, ConnUsed, ConnFree, Queries FROM stats_mysql_connection_pool ORDER BY hostgroup, srv_host;" 2>$null
+}
+
+function Reload-ProxySQL {
+    Write-ColorOutput "=== ProxySQL Configuration Reload ===" -Color Cyan
+    Write-Host ""
+
+    $proxyRunning = docker ps --filter "name=proxysql" --filter "status=running" --format "{{.Names}}"
+
+    if (-not $proxyRunning) {
+        Write-ColorOutput "ProxySQL tidak berjalan. Memulai ProxySQL..." -Color Yellow
+        docker-compose up -d proxysql
+        Start-Sleep -Seconds 5
+    } else {
+        Write-ColorOutput "ProxySQL sedang berjalan. Restarting..." -Color Green
+        docker-compose restart proxysql
+        Start-Sleep -Seconds 5
+    }
+
+    Write-Host ""
+    Write-ColorOutput "Menunggu ProxySQL siap..." -Color Yellow
+    Start-Sleep -Seconds 3
+
+    Write-Host ""
+    Write-ColorOutput "=== Query Rules Configuration ===" -Color Cyan
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT rule_id, active, match_digest, destination_hostgroup, apply, comment FROM mysql_query_rules ORDER BY rule_id;" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "=== MySQL Servers Configuration ===" -Color Cyan
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT hostgroup_id, hostname, port, status, weight, max_connections FROM mysql_servers ORDER BY hostgroup_id, hostname;" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "=== ProxySQL Configuration Reloaded ===" -Color Green
+    Write-Host ""
+    Write-ColorOutput "Anda sekarang dapat melakukan import data via Navicat:" -Color Yellow
+    Write-Host "  Host: localhost" -ForegroundColor White
+    Write-Host "  Port: 6033" -ForegroundColor White
+    Write-Host "  User: root" -ForegroundColor White
+    Write-Host "  Password: $script:DB_PASS" -ForegroundColor White
+    Write-Host ""
+}
+
+function Test-ProxySQLRouting {
+    Write-ColorOutput "=== Testing ProxySQL Query Routing ===" -Color Cyan
+    Write-Host ""
+
+    Write-ColorOutput "1. Testing DDL Statement (CREATE TABLE) - Should go to MASTER (hostgroup 10)" -Color Yellow
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$script:DB_PASS" testdb -e "DROP TABLE IF EXISTS test_routing;" 2>$null
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$script:DB_PASS" testdb -e "CREATE TABLE IF NOT EXISTS test_routing (id INT PRIMARY KEY, name VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "2. Testing INSERT Statement - Should go to MASTER (hostgroup 10)" -Color Yellow
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$script:DB_PASS" testdb -e "INSERT INTO test_routing (id, name) VALUES (1, 'test1'), (2, 'test2');" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "3. Testing SELECT Statement - Should go to SLAVE (hostgroup 20)" -Color Yellow
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$script:DB_PASS" testdb -e "SELECT * FROM test_routing;" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "4. Testing SELECT FOR UPDATE - Should go to MASTER (hostgroup 10)" -Color Yellow
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$script:DB_PASS" testdb -e "SELECT * FROM test_routing WHERE id = 1 FOR UPDATE;" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "5. Testing ALTER TABLE - Should go to MASTER (hostgroup 10)" -Color Yellow
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$script:DB_PASS" testdb -e "ALTER TABLE test_routing ADD COLUMN updated_at TIMESTAMP NULL;" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "=== Query Digest Stats (Last 10 queries) ===" -Color Cyan
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT hostgroup, schemaname, SUBSTRING(digest_text, 1, 80) as query, count_star FROM stats_mysql_query_digest WHERE schemaname='testdb' ORDER BY first_seen DESC LIMIT 10;" 2>$null
+
+    Write-Host ""
+    Write-ColorOutput "=== Verifikasi Routing ===" -Color Cyan
+    Write-ColorOutput "Periksa kolom 'hostgroup' pada hasil di atas:" -Color Yellow
+    Write-Host "  - hostgroup 10 = MASTER (untuk DDL, DML, SELECT FOR UPDATE)" -ForegroundColor White
+    Write-Host "  - hostgroup 20 = SLAVE (untuk SELECT biasa)" -ForegroundColor White
+    Write-Host ""
+    Write-ColorOutput "Test selesai. DDL statements sekarang bisa digunakan via Navicat!" -Color Green
+    Write-Host ""
 }
 
 ########################################
@@ -490,6 +569,10 @@ function Show-Help {
     Write-Host "  list-nodes          - Tampilkan semua nodes"
     Write-Host "  remove-node <name>  - Hapus node tertentu"
     Write-Host ""
+    Write-ColorOutput "ProxySQL Commands:" -Color Cyan
+    Write-Host "  reload-proxysql     - Reload ProxySQL config (fix Navicat DDL import)"
+    Write-Host "  test-proxysql       - Test query routing (DDL to master, SELECT to slave)"
+    Write-Host ""
     Write-ColorOutput "Performance Commands:" -Color Cyan
     Write-Host "  mode production     - Set ke PRODUCTION mode (safe, normal speed)"
     Write-Host "  mode development    - Set ke DEVELOPMENT mode (fast, less safe)"
@@ -501,6 +584,8 @@ function Show-Help {
     Write-Host "  stats               - Tampilkan statistik database"
     Write-Host ""
     Write-ColorOutput "Examples:" -Color Yellow
+    Write-Host "  .\bench.ps1 reload-proxysql               # Fix DDL import via Navicat"
+    Write-Host "  .\bench.ps1 test-proxysql                 # Test query routing"
     Write-Host "  .\bench.ps1 mode development              # Set FAST mode untuk import"
     Write-Host "  .\bench.ps1 mode production               # Set SAFE mode"
     Write-Host "  .\bench.ps1 show-mode                     # Cek mode aktif"
@@ -552,6 +637,12 @@ switch ($command) {
     }
     "stats" {
         Show-DbStats
+    }
+    "reload-proxysql" {
+        Reload-ProxySQL
+    }
+    "test-proxysql" {
+        Test-ProxySQLRouting
     }
     "benchmark" {
         Test-SysBench

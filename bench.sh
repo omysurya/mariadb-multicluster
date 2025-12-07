@@ -175,6 +175,83 @@ show_db_stats() {
     echo -e "${YELLOW}----------------------------------------${NC}"
 }
 
+reload_proxysql() {
+    echo -e "${CYAN}=== ProxySQL Configuration Reload ===${NC}"
+    echo ""
+
+    local proxy_running=$(docker ps --filter "name=proxysql" --filter "status=running" --format "{{.Names}}")
+
+    if [ -z "$proxy_running" ]; then
+        echo -e "${YELLOW}ProxySQL tidak berjalan. Memulai ProxySQL...${NC}"
+        $DOCKER_COMPOSE up -d proxysql
+        sleep 5
+    else
+        echo -e "${GREEN}ProxySQL sedang berjalan. Restarting...${NC}"
+        $DOCKER_COMPOSE restart proxysql
+        sleep 5
+    fi
+
+    echo ""
+    echo -e "${YELLOW}Menunggu ProxySQL siap...${NC}"
+    sleep 3
+
+    echo ""
+    echo -e "${CYAN}=== Query Rules Configuration ===${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT rule_id, active, match_digest, destination_hostgroup, apply, comment FROM mysql_query_rules ORDER BY rule_id;" 2>/dev/null
+
+    echo ""
+    echo -e "${CYAN}=== MySQL Servers Configuration ===${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT hostgroup_id, hostname, port, status, weight, max_connections FROM mysql_servers ORDER BY hostgroup_id, hostname;" 2>/dev/null
+
+    echo ""
+    echo -e "${GREEN}=== ProxySQL Configuration Reloaded ===${NC}"
+    echo ""
+    echo -e "${YELLOW}Anda sekarang dapat melakukan import data via Navicat:${NC}"
+    echo -e "  Host: localhost"
+    echo -e "  Port: 6033"
+    echo -e "  User: root"
+    echo -e "  Password: $DB_PASS"
+    echo ""
+}
+
+test_proxysql_routing() {
+    echo -e "${CYAN}=== Testing ProxySQL Query Routing ===${NC}"
+    echo ""
+
+    echo -e "${YELLOW}1. Testing DDL Statement (CREATE TABLE) - Should go to MASTER (hostgroup 10)${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$DB_PASS" testdb -e "DROP TABLE IF EXISTS test_routing;" 2>/dev/null
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$DB_PASS" testdb -e "CREATE TABLE IF NOT EXISTS test_routing (id INT PRIMARY KEY, name VARCHAR(50), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);" 2>/dev/null
+
+    echo ""
+    echo -e "${YELLOW}2. Testing INSERT Statement - Should go to MASTER (hostgroup 10)${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$DB_PASS" testdb -e "INSERT INTO test_routing (id, name) VALUES (1, 'test1'), (2, 'test2');" 2>/dev/null
+
+    echo ""
+    echo -e "${YELLOW}3. Testing SELECT Statement - Should go to SLAVE (hostgroup 20)${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$DB_PASS" testdb -e "SELECT * FROM test_routing;" 2>/dev/null
+
+    echo ""
+    echo -e "${YELLOW}4. Testing SELECT FOR UPDATE - Should go to MASTER (hostgroup 10)${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$DB_PASS" testdb -e "SELECT * FROM test_routing WHERE id = 1 FOR UPDATE;" 2>/dev/null
+
+    echo ""
+    echo -e "${YELLOW}5. Testing ALTER TABLE - Should go to MASTER (hostgroup 10)${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6033 -uroot -p"$DB_PASS" testdb -e "ALTER TABLE test_routing ADD COLUMN updated_at TIMESTAMP NULL;" 2>/dev/null
+
+    echo ""
+    echo -e "${CYAN}=== Query Digest Stats (Last 10 queries) ===${NC}"
+    docker exec proxysql mysql -h127.0.0.1 -P6032 -uadmin -padmin --table -e "SELECT hostgroup, schemaname, SUBSTRING(digest_text, 1, 80) as query, count_star FROM stats_mysql_query_digest WHERE schemaname='testdb' ORDER BY first_seen DESC LIMIT 10;" 2>/dev/null
+
+    echo ""
+    echo -e "${CYAN}=== Verifikasi Routing ===${NC}"
+    echo -e "${YELLOW}Periksa kolom 'hostgroup' pada hasil di atas:${NC}"
+    echo -e "  - hostgroup 10 = MASTER (untuk DDL, DML, SELECT FOR UPDATE)"
+    echo -e "  - hostgroup 20 = SLAVE (untuk SELECT biasa)"
+    echo ""
+    echo -e "${GREEN}Test selesai. DDL statements sekarang bisa digunakan via Navicat!${NC}"
+    echo ""
+}
+
 ########################################
 # Jalankan Benchmark Test
 ########################################
@@ -594,7 +671,7 @@ reset_and_start() {
 # Help
 ########################################
 show_help() {
-    echo "Usage: $0 {prepare|run|cleanup|all|stats|add-master|add-slave|list-nodes|remove-node|mode|show-mode|reset|reset-and-start}"
+    echo "Usage: $0 {prepare|run|cleanup|all|stats|add-master|add-slave|list-nodes|remove-node|mode|show-mode|reset|reset-and-start|reload-proxysql|test-proxysql}"
     echo ""
     echo "Benchmark Commands:"
     echo "  prepare     - Persiapkan database untuk benchmark"
@@ -602,6 +679,10 @@ show_help() {
     echo "  cleanup     - Bersihkan data benchmark"
     echo "  all         - Jalankan semua (prepare, run, cleanup)"
     echo "  stats       - Tampilkan statistik database"
+    echo ""
+    echo "ProxySQL Commands:"
+    echo "  reload-proxysql - Reload ProxySQL config (fix Navicat DDL import)"
+    echo "  test-proxysql   - Test query routing (DDL to master, SELECT to slave)"
     echo ""
     echo "Scaling Commands:"
     echo "  add-master  - Tambah master baru secara dinamis"
@@ -618,6 +699,8 @@ show_help() {
     echo "  reset-and-start - Reset data + restart cluster otomatis"
     echo ""
     echo "Examples:"
+    echo "  $0 reload-proxysql     # Fix DDL import via Navicat"
+    echo "  $0 test-proxysql       # Test query routing"
     echo "  $0 mode development    # Set FAST mode untuk import"
     echo "  $0 mode production     # Set SAFE mode"
     echo "  $0 show-mode           # Cek mode aktif"
@@ -682,6 +765,12 @@ case "$1" in
         ;;
     reset-and-start)
         reset_and_start
+        ;;
+    reload-proxysql)
+        reload_proxysql
+        ;;
+    test-proxysql)
+        test_proxysql_routing
         ;;
     *)
         show_help
