@@ -64,6 +64,7 @@ mysql_variables =
 mysql_servers = (
 	{ address = "mariadb-master1"; port = 3306; hostgroup = 10; max_connections = 500; weight = 1000; max_replication_lag = 0; use_ssl = 0; max_latency_ms = 500; comment = "master1"; },
 	{ address = "mariadb-master2"; port = 3306; hostgroup = 10; max_connections = 500; weight = 1000; max_replication_lag = 0; use_ssl = 0; max_latency_ms = 500; comment = "master2"; },
+	{ address = "mariadb-master1"; port = 3306; hostgroup = 30; max_connections = 200; weight = 1000; max_replication_lag = 0; use_ssl = 0; max_latency_ms = 500; comment = "master1-ddl-only"; },
 	{ address = "mariadb-slave1"; port = 3306; hostgroup = 20; max_connections = 500; weight = 1000; max_replication_lag = 30; use_ssl = 0; max_latency_ms = 500; comment = "slave1"; },
 	{ address = "mariadb-slave2"; port = 3306; hostgroup = 20; max_connections = 500; weight = 1000; max_replication_lag = 30; use_ssl = 0; max_latency_ms = 500; comment = "slave2"; },
 	{ address = "mariadb-slave3"; port = 3306; hostgroup = 20; max_connections = 500; weight = 1000; max_replication_lag = 30; use_ssl = 0; max_latency_ms = 500; comment = "slave3"; },
@@ -76,7 +77,7 @@ mysql_users = (
 );
 
 mysql_query_rules = (
-	{ rule_id = 1; active = 1; match_digest = "^CREATE.*|^ALTER.*|^DROP.*|^TRUNCATE.*|^RENAME.*"; destination_hostgroup = 10; apply = 1; comment = "DDL to masters"; },
+	{ rule_id = 1; active = 1; match_digest = "^CREATE.*|^ALTER.*|^DROP.*|^TRUNCATE.*|^RENAME.*"; destination_hostgroup = 30; apply = 1; comment = "DDL to master1 only"; },
 	{ rule_id = 2; active = 1; match_digest = "^SET.*|^SHOW.*|^USE.*|^DESC.*|^DESCRIBE.*|^EXPLAIN.*"; destination_hostgroup = 10; apply = 1; comment = "Session and metadata to masters"; },
 	{ rule_id = 3; active = 1; match_digest = "^BEGIN.*|^START TRANSACTION.*|^COMMIT.*|^ROLLBACK.*"; destination_hostgroup = 10; apply = 1; comment = "Transactions to masters"; },
 	{ rule_id = 4; active = 1; match_digest = "^SELECT.*FOR UPDATE.*|^SELECT.*LOCK IN SHARE MODE.*"; destination_hostgroup = 10; apply = 1; comment = "Locking reads to masters"; },
