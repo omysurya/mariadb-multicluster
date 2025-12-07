@@ -23,30 +23,36 @@ services:
       --binlog-format=ROW
       --relay-log=mysqld-relay-bin
       --relay-log-index=mysqld-relay-bin.index
-      --max_connections=500
-      --innodb_buffer_pool_size=3G
-      --innodb_log_file_size=1G
-      --innodb_log_buffer_size=256M
-      --innodb_flush_log_at_trx_commit=0
+      --max_connections=2000
+      --thread_cache_size=300
+      --back_log=1500
+      --thread_handling=pool-of-threads
+      --thread_pool_size=32
+
+      --innodb_buffer_pool_size=4G
+      --innodb_buffer_pool_instances=4
+      --innodb_log_file_size=2G
+      --innodb_log_buffer_size=512M
+      --innodb_flush_log_at_trx_commit=2
       --innodb_flush_method=O_DIRECT
       --innodb_use_native_aio=OFF
 
-      --innodb_io_capacity=4000
-      --innodb_io_capacity_max=8000
-      --innodb_read_io_threads=16
-      --innodb_write_io_threads=16
+      --innodb_io_capacity=6000
+      --innodb_io_capacity_max=12000
+      --innodb_read_io_threads=8
+      --innodb_write_io_threads=32
       --innodb_doublewrite=OFF
       --innodb_flush_neighbors=0
       --innodb_adaptive_hash_index=ON
+      --innodb_change_buffering=all
+      --innodb_change_buffer_max_size=50
 
-      --table_open_cache=8000
-      --table_definition_cache=4000
+      --table_open_cache=10000
+      --table_definition_cache=5000
       --query_cache_type=0
       --query_cache_size=0
-      --tmp_table_size=512M
-      --max_heap_table_size=512M
-      --thread_cache_size=200
-      --back_log=900
+      --tmp_table_size=1G
+      --max_heap_table_size=1G
       --skip-name-resolve
       --skip-host-cache
       --connect_timeout=3
@@ -58,8 +64,15 @@ services:
       --key_buffer_size=256M
       --max_allowed_packet=1G
       --net_buffer_length=16K
-      --binlog_cache_size=4M
+      --binlog_cache_size=8M
       --sync_binlog=0
+      --binlog_group_commit_sync_delay=0
+      --binlog_group_commit_sync_no_delay_count=100
+      --slave_parallel_threads=16
+      --slave_parallel_mode=optimistic
+      --slave_parallel_max_queued=16M
+      --slave_parallel_mode=optimistic
+      --slave_parallel_max_queued=16M
 
   mariadb-master2:
     image: mariadb:11.4
@@ -87,19 +100,23 @@ services:
       --binlog-format=ROW
       --relay-log=mysqld-relay-bin
       --relay-log-index=mysqld-relay-bin.index
-      --max_connections=500
+      --max_connections=1000
+      --thread_cache_size=200
+      --back_log=900
+
       --innodb_buffer_pool_size=3G
+      --innodb_buffer_pool_instances=3
       --innodb_log_file_size=1G
       --innodb_log_buffer_size=256M
-      --innodb_flush_log_at_trx_commit=0
+      --innodb_flush_log_at_trx_commit=1
       --innodb_flush_method=O_DIRECT
       --innodb_use_native_aio=OFF
 
       --innodb_io_capacity=4000
       --innodb_io_capacity_max=8000
-      --innodb_read_io_threads=16
-      --innodb_write_io_threads=16
-      --innodb_doublewrite=OFF
+      --innodb_read_io_threads=8
+      --innodb_write_io_threads=8
+      --innodb_doublewrite=ON
       --innodb_flush_neighbors=0
       --innodb_adaptive_hash_index=ON
 
@@ -109,8 +126,6 @@ services:
       --query_cache_size=0
       --tmp_table_size=512M
       --max_heap_table_size=512M
-      --thread_cache_size=200
-      --back_log=900
       --skip-name-resolve
       --skip-host-cache
       --connect_timeout=3
@@ -123,7 +138,9 @@ services:
       --max_allowed_packet=1G
       --net_buffer_length=16K
       --binlog_cache_size=4M
-      --sync_binlog=0
+      --sync_binlog=1
+      --slave_parallel_threads=16
+      --slave_parallel_mode=optimistic
     depends_on:
       - mariadb-master1
 
@@ -154,44 +171,50 @@ services:
       --read-only=ON
       --relay-log=mysqld-relay-bin
       --relay-log-index=mysqld-relay-bin.index
-      --max_connections=500
-      --innodb_buffer_pool_size=3G
-      --innodb_log_file_size=1G
-      --innodb_log_buffer_size=256M
-      --innodb_flush_log_at_trx_commit=0
+      --max_connections=1000
+      --thread_cache_size=250
+      --back_log=1000
+      --thread_handling=pool-of-threads
+      --thread_pool_size=24
+
+      --innodb_buffer_pool_size=4G
+      --innodb_buffer_pool_instances=4
+      --innodb_log_file_size=512M
+      --innodb_log_buffer_size=128M
+      --innodb_flush_log_at_trx_commit=2
       --innodb_flush_method=O_DIRECT
       --innodb_use_native_aio=OFF
 
-      --innodb_io_capacity=4000
-      --innodb_io_capacity_max=8000
-      --innodb_read_io_threads=16
-      --innodb_write_io_threads=16
+      --innodb_io_capacity=5000
+      --innodb_io_capacity_max=10000
+      --innodb_read_io_threads=32
+      --innodb_write_io_threads=4
       --innodb_doublewrite=OFF
       --innodb_flush_neighbors=0
       --innodb_adaptive_hash_index=ON
 
-      --table_open_cache=8000
-      --table_definition_cache=4000
+      --table_open_cache=12000
+      --table_definition_cache=6000
       --query_cache_type=0
       --query_cache_size=0
-      --tmp_table_size=512M
-      --max_heap_table_size=512M
-      --thread_cache_size=200
-      --back_log=900
+      --tmp_table_size=1G
+      --max_heap_table_size=1G
       --skip-name-resolve
       --skip-host-cache
       --connect_timeout=3
-      --sort_buffer_size=8M
-      --read_buffer_size=4M
-      --read_rnd_buffer_size=8M
-      --join_buffer_size=8M
-      --bulk_insert_buffer_size=64M
-      --key_buffer_size=256M
+      --sort_buffer_size=16M
+      --read_buffer_size=8M
+      --read_rnd_buffer_size=16M
+      --join_buffer_size=16M
+      --bulk_insert_buffer_size=32M
+      --key_buffer_size=512M
       --max_allowed_packet=1G
       --net_buffer_length=16K
-      --binlog_cache_size=4M
+      --binlog_cache_size=2M
       --sync_binlog=0
-      --slave_parallel_threads=8
+      --slave_parallel_threads=16
+      --slave_parallel_mode=optimistic
+      --slave_parallel_max_queued=16M
     depends_on:
       - mariadb-master1
       - mariadb-master2
@@ -223,38 +246,42 @@ services:
       --read-only=ON
       --relay-log=mysqld-relay-bin
       --relay-log-index=mysqld-relay-bin.index
-      --max_connections=500
-      --innodb_buffer_pool_size=3G
-      --innodb_log_file_size=1G
-      --innodb_log_buffer_size=256M
-      --innodb_flush_log_at_trx_commit=0
+      --max_connections=1000
+      --thread_cache_size=250
+      --back_log=1000
+      --thread_handling=pool-of-threads
+      --thread_pool_size=24
+
+      --innodb_buffer_pool_size=4G
+      --innodb_buffer_pool_instances=4
+      --innodb_log_file_size=512M
+      --innodb_log_buffer_size=128M
+      --innodb_flush_log_at_trx_commit=2
       --innodb_flush_method=O_DIRECT
       --innodb_use_native_aio=OFF
 
-      --innodb_io_capacity=4000
-      --innodb_io_capacity_max=8000
-      --innodb_read_io_threads=16
-      --innodb_write_io_threads=16
+      --innodb_io_capacity=5000
+      --innodb_io_capacity_max=10000
+      --innodb_read_io_threads=32
+      --innodb_write_io_threads=4
       --innodb_doublewrite=OFF
       --innodb_flush_neighbors=0
       --innodb_adaptive_hash_index=ON
 
-      --table_open_cache=8000
-      --table_definition_cache=4000
+      --table_open_cache=12000
+      --table_definition_cache=6000
       --query_cache_type=0
       --query_cache_size=0
-      --tmp_table_size=512M
-      --max_heap_table_size=512M
-      --thread_cache_size=200
-      --back_log=900
+      --tmp_table_size=1G
+      --max_heap_table_size=1G
       --skip-name-resolve
       --skip-host-cache
       --connect_timeout=3
-      --sort_buffer_size=8M
-      --read_buffer_size=4M
-      --read_rnd_buffer_size=8M
-      --join_buffer_size=8M
-      --bulk_insert_buffer_size=64M
+      --sort_buffer_size=16M
+      --read_buffer_size=8M
+      --read_rnd_buffer_size=16M
+      --join_buffer_size=16M
+      --bulk_insert_buffer_size=32M
       --key_buffer_size=256M
       --max_allowed_packet=1G
       --net_buffer_length=16K
@@ -292,44 +319,50 @@ services:
       --read-only=ON
       --relay-log=mysqld-relay-bin
       --relay-log-index=mysqld-relay-bin.index
-      --max_connections=500
-      --innodb_buffer_pool_size=3G
-      --innodb_log_file_size=1G
-      --innodb_log_buffer_size=256M
-      --innodb_flush_log_at_trx_commit=0
+      --max_connections=1000
+      --thread_cache_size=250
+      --back_log=1000
+      --thread_handling=pool-of-threads
+      --thread_pool_size=24
+
+      --innodb_buffer_pool_size=4G
+      --innodb_buffer_pool_instances=4
+      --innodb_log_file_size=512M
+      --innodb_log_buffer_size=128M
+      --innodb_flush_log_at_trx_commit=2
       --innodb_flush_method=O_DIRECT
       --innodb_use_native_aio=OFF
 
-      --innodb_io_capacity=4000
-      --innodb_io_capacity_max=8000
-      --innodb_read_io_threads=16
-      --innodb_write_io_threads=16
+      --innodb_io_capacity=5000
+      --innodb_io_capacity_max=10000
+      --innodb_read_io_threads=32
+      --innodb_write_io_threads=4
       --innodb_doublewrite=OFF
       --innodb_flush_neighbors=0
       --innodb_adaptive_hash_index=ON
 
-      --table_open_cache=8000
-      --table_definition_cache=4000
+      --table_open_cache=12000
+      --table_definition_cache=6000
       --query_cache_type=0
       --query_cache_size=0
-      --tmp_table_size=512M
-      --max_heap_table_size=512M
-      --thread_cache_size=200
-      --back_log=900
+      --tmp_table_size=1G
+      --max_heap_table_size=1G
       --skip-name-resolve
       --skip-host-cache
       --connect_timeout=3
-      --sort_buffer_size=8M
-      --read_buffer_size=4M
-      --read_rnd_buffer_size=8M
-      --join_buffer_size=8M
-      --bulk_insert_buffer_size=64M
-      --key_buffer_size=256M
+      --sort_buffer_size=16M
+      --read_buffer_size=8M
+      --read_rnd_buffer_size=16M
+      --join_buffer_size=16M
+      --bulk_insert_buffer_size=32M
+      --key_buffer_size=512M
       --max_allowed_packet=1G
       --net_buffer_length=16K
-      --binlog_cache_size=4M
+      --binlog_cache_size=2M
       --sync_binlog=0
-      --slave_parallel_threads=8
+      --slave_parallel_threads=16
+      --slave_parallel_mode=optimistic
+      --slave_parallel_max_queued=16M
     depends_on:
       - mariadb-master1
       - mariadb-master2
@@ -361,39 +394,43 @@ services:
       --read-only=ON
       --relay-log=mysqld-relay-bin
       --relay-log-index=mysqld-relay-bin.index
-      --max_connections=500
-      --innodb_buffer_pool_size=3G
-      --innodb_log_file_size=1G
-      --innodb_log_buffer_size=256M
-      --innodb_flush_log_at_trx_commit=0
+      --max_connections=1000
+      --thread_cache_size=250
+      --back_log=1000
+      --thread_handling=pool-of-threads
+      --thread_pool_size=24
+
+      --innodb_buffer_pool_size=4G
+      --innodb_buffer_pool_instances=4
+      --innodb_log_file_size=512M
+      --innodb_log_buffer_size=128M
+      --innodb_flush_log_at_trx_commit=2
       --innodb_flush_method=O_DIRECT
       --innodb_use_native_aio=OFF
 
-      --innodb_io_capacity=4000
-      --innodb_io_capacity_max=8000
-      --innodb_read_io_threads=16
-      --innodb_write_io_threads=16
+      --innodb_io_capacity=5000
+      --innodb_io_capacity_max=10000
+      --innodb_read_io_threads=32
+      --innodb_write_io_threads=4
       --innodb_doublewrite=OFF
       --innodb_flush_neighbors=0
       --innodb_adaptive_hash_index=ON
 
-      --table_open_cache=8000
-      --table_definition_cache=4000
+      --table_open_cache=12000
+      --table_definition_cache=6000
       --query_cache_type=0
       --query_cache_size=0
-      --tmp_table_size=512M
-      --max_heap_table_size=512M
-      --thread_cache_size=200
-      --back_log=900
+      --tmp_table_size=1G
+      --max_heap_table_size=1G
       --skip-name-resolve
       --skip-host-cache
       --connect_timeout=3
-      --sort_buffer_size=8M
-      --read_buffer_size=4M
-      --read_rnd_buffer_size=8M
-      --join_buffer_size=8M
-      --bulk_insert_buffer_size=64M
-      --key_buffer_size=256M
+      --sort_buffer_size=16M
+      --read_buffer_size=8M
+      --read_rnd_buffer_size=16M
+      --join_buffer_size=16M
+      --bulk_insert_buffer_size=32M
+      --key_buffer_size=512M
       --max_allowed_packet=1G
       --net_buffer_length=16K
       --binlog_cache_size=4M
