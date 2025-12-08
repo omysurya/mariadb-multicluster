@@ -73,14 +73,21 @@ The `bench.ps1` (Windows) and `bench.sh` (Linux) scripts provide comprehensive c
 **Start/Stop Cluster:**
 ```bash
 # Windows
-docker-compose up -d
-docker-compose down
+docker compose up -d
+docker compose down
+docker compose up -d proxysql
 
 # Linux
-docker-compose up -d
-docker-compose down
+docker compose up -d
+docker compose down
+docker compose up -d proxysql
 ```
 
+### Container Logs
+```bash
+docker compose logs -f
+docker compose logs -f proxysql
+```
 ### Performance Mode Switching
 
 Switch between production (safe) and development (fast) modes **without destroying data or restarting containers**.
